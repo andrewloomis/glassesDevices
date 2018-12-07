@@ -1,10 +1,11 @@
-#include <gesturecontroller.h>
+#include <gesturesensor.h>
 #include <iostream>
 #include <chrono>
 #include <thread>
 
 // Pins
 #define I2C_BUS 0
+#define DEVICE_ADDR 0x39
 #define INT 33
 
 // Registers
@@ -28,47 +29,53 @@
 #define GPENTH 0xA0
 #define GEXTH 0xA1
 
-GestureController::GestureController()
+GestureSensor::GestureSensor()
     : i2c(I2C_BUS), interrupt(INT)
 {
+    // Setup Logger
+    log = spdlog::stdout_color_mt("Gestures");
+    log->set_pattern("[%T-%ems] [%n] %v");
+
+    log->info("Configuring I2C with address {0:h}", DEVICE_ADDR);
     i2c.frequency(mraa::I2cMode::I2C_STD);
-    if (i2c.address(0x39) != mraa::Result::SUCCESS)
+    if (i2c.address(DEVICE_ADDR) != mraa::Result::SUCCESS)
     {
-        std::cout << "Device address invalid\n";
+        log->error("Device address invalid");
     }
 
     interrupt.dir(mraa::DIR_IN);
     interrupt.isr(mraa::Edge::EDGE_FALLING, intCallback, this);
 
+    log->info("APDS-9960 setting up registers");
     setupADC();
     
     // Clear interrupts
     i2c.writeByte(AICLEAR);
     setupGestureRegisters();
     powerMode(PowerMode::ON);
-    std::cout << "Gesture sensor active\n";
+    log->info("APDS-9960 powered on");
 }
 
-GestureController::~GestureController()
+GestureSensor::~GestureSensor()
 {
     std::cout << "Sleeping Gesture Sensor\n";
     powerMode(PowerMode::OFF);
 }
 
-void GestureController::powerMode(PowerMode mode)
+void GestureSensor::powerMode(PowerMode mode)
 {
     // Set GEN, PEN and PON to 1
     i2c.writeReg(EN, 0b01000100 + static_cast<uint8_t>(mode));
 }
 
-void GestureController::enableGestures()
+void GestureSensor::enableGestures()
 {
     // Clears gesture FIFO, enables interrupt
     i2c.writeReg(GCONF4, 0b00000'1'1'0);
     i2c.writeByte(AICLEAR);
 }
 
-void GestureController::setupADC()
+void GestureSensor::setupADC()
 {
 //    float time = 256 - (10 / 2.78);
     i2c.writeReg(ATIME, 219);
@@ -76,7 +83,7 @@ void GestureController::setupADC()
     i2c.writeReg(CTRL1, 0b0000'10'01);
 }
 
-void GestureController::setupGestureRegisters()
+void GestureSensor::setupGestureRegisters()
 {
     // Set FIFO Threshold to 4 datasets
     i2c.writeReg(GCONF1, 0b01'0000'10);
@@ -105,15 +112,17 @@ void GestureController::setupGestureRegisters()
     // enableGestures();
 }
 
-void GestureController::intCallback(void* data)
+// When proximity sensor detects hand over sensor, interrupt is
+// triggered, and gesture reading should begin
+void GestureSensor::intCallback(void* data)
 {
-    GestureController* gc = reinterpret_cast<GestureController*>(data);
+    GestureSensor* gc = reinterpret_cast<GestureSensor*>(data);
     // std::cout << "Interrupt\n";
     gc->readGestureData();
     gc->enableGestures();
 }
 
-void GestureController::readGestureData()
+void GestureSensor::readGestureData()
 {
     uint8_t dataCounts = i2c.readReg(GFLVL);
     std::array<uint8_t, 128> fifoBuffer{};
@@ -122,20 +131,16 @@ void GestureController::readGestureData()
     parseFifoData(fifoBuffer, dataCounts);
 }
 
-void GestureController::sleep(int milliseconds)
+void GestureSensor::sleep(int milliseconds)
 {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
 
-void GestureController::parseFifoData(const std::array<uint8_t, 128>& data, uint8_t dataCount)
+void GestureSensor::parseFifoData(const std::array<uint8_t, 128>& data, uint8_t dataCount)
 {
     int upDownDiff = data[0] - data[1];
     int leftRightDiff = data[2] - data[3];
-    // std::cout << "Up: " << upDownDiff << std::endl;
-    // std::cout << "Left: " << leftRightDiff << "\n-------------" << std::endl;
-    // for (int i = 0; i < dataCount; i++) std::cout << (int)data[i] << ',';
-    // std::cout << std::endl;
     const int threshold = 13;
     
     if (upDownDiff < -threshold)
@@ -143,7 +148,7 @@ void GestureController::parseFifoData(const std::array<uint8_t, 128>& data, uint
         if (detects.down > 0) {
             gestureBuffer.add(Direction::UP);
             // swipeManager->moveToUp();
-            std::cout << "UP****************\n";
+            log->info("UP gesture detected");
             detects.reset();
             sleep(200);
         }
@@ -154,7 +159,7 @@ void GestureController::parseFifoData(const std::array<uint8_t, 128>& data, uint
         if (detects.up > 0) {
             gestureBuffer.add(Direction::DOWN);
             // swipeManager->moveToDown();
-            std::cout << "DOWN****************\n";
+            log->info("DOWN gesture detected");
             detects.reset();
             sleep(200);
         }
@@ -165,7 +170,7 @@ void GestureController::parseFifoData(const std::array<uint8_t, 128>& data, uint
         if (detects.right > 0) {
             gestureBuffer.add(Direction::LEFT);
             // swipeManager->moveToLeft();
-            std::cout << "LEFT****************\n";
+            log->info("LEFT gesture detected");
             detects.reset();
             sleep(200);
         }
@@ -176,7 +181,7 @@ void GestureController::parseFifoData(const std::array<uint8_t, 128>& data, uint
         if (detects.left > 0) {
             gestureBuffer.add(Direction::RIGHT);
             // swipeManager->moveToRight();
-            std::cout << "RIGHT****************\n";
+            log->info("RIGHT gesture detected");
             detects.reset();
             sleep(200);
         }

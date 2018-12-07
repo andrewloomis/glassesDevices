@@ -1,17 +1,20 @@
-#ifndef GESTURECONTROLLER_H
-#define GESTURECONTROLLER_H
+#ifndef GESTURESENSOR_H
+#define GESTURESENSOR_H
 
 #include <usertypes.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <mraa.hpp>
 #include <array>
 #include <vector>
 #include <memory>
 
-class GestureController
+// APDS-9960 Sensor
+class GestureSensor
 {
 public:
-    GestureController();
-    ~GestureController();
+    GestureSensor();
+    ~GestureSensor();
     Gesture getLatestGesture() const { return gestureBuffer.getLatest(); }
 
 private:
@@ -19,6 +22,7 @@ private:
     mraa::Gpio interrupt;
     GestureBuffer gestureBuffer;
     Direction lastDetect = Direction::NONE;
+    std::shared_ptr<spdlog::logger> log;
 
     struct PreviousDetects
     {
