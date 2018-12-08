@@ -14,9 +14,9 @@ TouchSlider::TouchSlider()
 {
     // Setup Logger
     log = spdlog::stdout_color_mt("TouchSlider");
-    log->set_pattern("[%T-%ems] [%n] %v");
+    log->set_pattern("[%T %ems] %^[%n] %v%$");
 
-    log->info("Configuring I2C with address {0:h}", DEVICE_ADDR);
+    log->info("Configuring I2C with address {0:x}", DEVICE_ADDR);
     i2c.frequency(mraa::I2cMode::I2C_STD);
     if (i2c.address(DEVICE_ADDR) != mraa::Result::SUCCESS)
     {

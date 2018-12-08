@@ -2,7 +2,7 @@ CXX = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aa
 AR = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ar
 LD = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ld
 CXXFLAGS = -std=c++17 -Wall -g
-INC = -I.
+INC = -I. -I./spdlog/include/
 SYSROOT = /media/hdd/linaro/sysroot
 LIBS = -lmraa -pthread
 TARGET = lib/libglassesDevices
@@ -33,3 +33,5 @@ uninstall:
 clean:
 	rm $(TARGET).so $(TARGET).a src/*.o
 	
+cleanobjects:
+	rm src/*.o

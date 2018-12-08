@@ -34,9 +34,9 @@ GestureSensor::GestureSensor()
 {
     // Setup Logger
     log = spdlog::stdout_color_mt("Gestures");
-    log->set_pattern("[%T-%ems] [%n] %v");
+    log->set_pattern("[%T %ems] %^[%n] %v%$");
 
-    log->info("Configuring I2C with address {0:h}", DEVICE_ADDR);
+    log->info("Configuring I2C with address 0x{0:x}", DEVICE_ADDR);
     i2c.frequency(mraa::I2cMode::I2C_STD);
     if (i2c.address(DEVICE_ADDR) != mraa::Result::SUCCESS)
     {
@@ -58,7 +58,7 @@ GestureSensor::GestureSensor()
 
 GestureSensor::~GestureSensor()
 {
-    std::cout << "Sleeping Gesture Sensor\n";
+    log->info("Sleeping APDS-9960");
     powerMode(PowerMode::OFF);
 }
 

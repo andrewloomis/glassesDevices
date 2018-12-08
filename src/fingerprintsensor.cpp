@@ -7,7 +7,7 @@ FingerprintSensor::FingerprintSensor()
 {
     // Setup Logger
     log = spdlog::stdout_color_mt("Fingerprint");
-    log->set_pattern("[%T-%ems] [%n] %v");
+    log->set_pattern("[%T %ems] %^[%n] %v%$");
 
     spi.mode(mraa::Spi_Mode::SPI_MODE0);
 
