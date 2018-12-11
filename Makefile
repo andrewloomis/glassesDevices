@@ -1,3 +1,4 @@
+SHELL = /bin/bash
 CXX = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++
 AR = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ar
 LD = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ld
@@ -10,7 +11,11 @@ SOURCES = $(wildcard src/*.cpp)
 OBJS = $(SOURCES:.cpp=.o)
 INSTALL_DIR = /usr/lib
 
-all: $(TARGET).so $(TARGET).a
+all: build_dir $(TARGET).so $(TARGET).a
+
+build_dir:
+	if [ ! -d "lib" ]; then mkdir lib; fi
+
 static: $(TARGET).a
 shared: $(TARGET).so
 

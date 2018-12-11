@@ -34,7 +34,6 @@ GestureSensor::GestureSensor()
 {
     // Setup Logger
     log = spdlog::stdout_color_mt("Gestures");
-    log->set_pattern("[%T %ems] %^[%n] %v%$");
 
     log->info("Configuring I2C with address 0x{0:x}", DEVICE_ADDR);
     i2c.frequency(mraa::I2cMode::I2C_STD);
