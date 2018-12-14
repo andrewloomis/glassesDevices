@@ -43,13 +43,14 @@ TouchSlider::~TouchSlider()
 
 void TouchSlider::lowPowerMode()
 {
+    log->info("IQS263 going to low power");
     ForceCommunication fc(ready);
     i2c.writeReg(SYSFLAGS0, 0x01);
 }
 
-void TouchSlider::eventTriggered(void* data)
+void TouchSlider::eventTriggered(void* instance)
 {
-    TouchSlider* self = reinterpret_cast<TouchSlider*>(data);
+    TouchSlider* self = reinterpret_cast<TouchSlider*>(instance);
     ForceCommunication fc(self->ready);
 
     uint8_t flags[2];
@@ -59,10 +60,42 @@ void TouchSlider::eventTriggered(void* data)
     switch (event)
     {
     case Events::FlickRight:
+        if (self->rightFlickCallback)
+        {
+            self->rightFlickCallback();
+        }
+        else self->log->error("Right flick callback not set!");
         break;
     case Events::FlickLeft:
+        if (self->leftFlickCallback)
+        {
+            self->leftFlickCallback();
+        }
+        else self->log->error("Left flick callback not set!");
+        break;
+    case Events::Tap:
+        if (self->tapCallback)
+        {
+            self->tapCallback();
+        }
+        else self->log->error("Tap callback not set!");
         break;
     default:
-        break;
+        self->log->warn("Event not recognized");
     }
+}
+
+void TouchSlider::onRightFlick(std::function<void()> callback)
+{
+    rightFlickCallback = callback;
+}
+
+void TouchSlider::onLeftFlick(std::function<void()> callback)
+{
+    leftFlickCallback = callback;
+}
+
+void TouchSlider::onTap(std::function<void()> callback)
+{
+    tapCallback = callback;
 }

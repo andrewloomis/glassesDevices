@@ -13,7 +13,20 @@ public:
 
 private:
     mraa::Spi spi;
+    mraa::Gpio reset;
+    mraa::Gpio interrupt;
     std::shared_ptr<spdlog::logger> log;
+    enum class State
+    {
+        WAITING_FOR_FINGER,
+        WAITING_FOR_IMAGE_DATA
+    } state;
+
+    void setupSPI();
+    void setupGPIO();
+    void checkHW();
+    void setupRegisters();
+    static void intCallback(void* instance);
 };
 
 #endif

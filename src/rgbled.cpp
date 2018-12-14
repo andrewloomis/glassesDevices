@@ -1,4 +1,4 @@
-#include "rgbled.h"
+#include <rgbled.h>
 #include <iostream>
 
 #define I2C_BUS 0
@@ -14,11 +14,16 @@
 RGBLed::RGBLed()
     : i2c(I2C_BUS)
 {
+    // Setup Logger
+    log = spdlog::stdout_color_mt("LED");
+
+    log->info("Configuring I2C with address 0x{0:x}", DEVICE_ADDR);
+
     // 100kHz
     i2c.frequency(mraa::I2cMode::I2C_STD);
     if (i2c.address(DEVICE_ADDR) != mraa::Result::SUCCESS)
     {
-        std::cout << "Device address invalid\n";
+        log->error("Device address invalid");
     }
 }
 

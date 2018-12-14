@@ -3,6 +3,8 @@
 
 #include <mraa.hpp>
 #include <inttypes.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 class RGBLed
 {
@@ -12,6 +14,7 @@ public:
 
 private:
     mraa::I2c i2c;
+    std::shared_ptr<spdlog::logger> log;
     int variableColorCount = 0;
 
     enum class LED

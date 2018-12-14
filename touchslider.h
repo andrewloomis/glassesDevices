@@ -5,17 +5,25 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <functional>
 
 class TouchSlider
 {
 public:
     TouchSlider();
     ~TouchSlider();
+    void onRightFlick(std::function<void()> callback);
+    void onLeftFlick(std::function<void()> callback);
+    void onTap(std::function<void()> callback);
 
 private:
     mraa::I2c i2c;
     mraa::Gpio ready;
     std::shared_ptr<spdlog::logger> log;
+
+    std::function<void()> rightFlickCallback;
+    std::function<void()> leftFlickCallback;
+    std::function<void()> tapCallback;
 
     void lowPowerMode();
     static void eventTriggered(void* self);
