@@ -1,10 +1,10 @@
 #ifndef RGBLED_H
 #define RGBLED_H
 
-#include <mraa.hpp>
 #include <inttypes.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <libsoc-cpp/i2c.h>
 
 class RGBLed
 {
@@ -13,7 +13,7 @@ public:
     void setColor(int red, int green, int blue);
 
 private:
-    mraa::I2c i2c;
+    libsoc::I2c i2c;
     std::shared_ptr<spdlog::logger> log;
     int variableColorCount = 0;
 

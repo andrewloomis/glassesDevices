@@ -1,11 +1,12 @@
 #ifndef TOUCHSLIDER_H
 #define TOUCHSLIDER_H
 
-#include <mraa.hpp>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <functional>
+#include <libsoc-cpp/gpio.h>
+#include <libsoc-cpp/i2c.h>
 
 class TouchSlider
 {
@@ -17,8 +18,8 @@ public:
     void onTap(std::function<void()> callback);
 
 private:
-    mraa::I2c i2c;
-    mraa::Gpio ready;
+    libsoc::I2c i2c;
+    libsoc::Gpio ready;
     std::shared_ptr<spdlog::logger> log;
 
     std::function<void()> rightFlickCallback;
@@ -26,7 +27,7 @@ private:
     std::function<void()> tapCallback;
 
     void lowPowerMode();
-    static void eventTriggered(void* self);
+    static int eventTriggered(void* self);
 
     enum class Events
     {
@@ -43,16 +44,17 @@ private:
     class ForceCommunication
     {
     public:
-        ForceCommunication(mraa::Gpio interrupt)
+        ForceCommunication(libsoc::Gpio& interrupt)
             : interrupt(interrupt)
         {
-            interrupt.dir(mraa::DIR_OUT_LOW);
+            interrupt.setDirection(libsoc::Direction::OUTPUT);
+            interrupt.write(libsoc::Level::LOW);
         }
         ~ForceCommunication()
         {
-            interrupt.dir(mraa::DIR_IN);
+            interrupt.setDirection(libsoc::Direction::INPUT);
         }
-        mraa::Gpio& interrupt;
+        libsoc::Gpio& interrupt;
     };
 };
 

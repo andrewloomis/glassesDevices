@@ -4,10 +4,11 @@
 #include <usertypes.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <mraa.hpp>
 #include <array>
 #include <vector>
 #include <memory>
+#include <libsoc-cpp/i2c.h>
+#include <libsoc-cpp/gpio.h>
 
 // APDS-9960 Sensor
 class GestureSensor
@@ -15,13 +16,13 @@ class GestureSensor
 public:
     GestureSensor();
     ~GestureSensor();
-    Gesture getLatestGesture() const { return gestureBuffer.getLatest(); }
+    Gesture::Gesture getLatestGesture() const { return gestureBuffer.getLatest(); }
 
 private:
-    mraa::I2c i2c;
-    mraa::Gpio interrupt;
-    GestureBuffer gestureBuffer;
-    Direction lastDetect = Direction::NONE;
+    libsoc::I2c i2c;
+    libsoc::Gpio interrupt;
+    Gesture::Buffer gestureBuffer;
+    Gesture::Direction lastDetect = Gesture::Direction::NONE;
     std::shared_ptr<spdlog::logger> log;
 
     struct PreviousDetects
@@ -46,7 +47,7 @@ private:
     };
 
     void enableGestures();
-    static void intCallback(void*);
+    static int intCallback(void*);
     void readGestureData();
     void parseFifoData(const std::array<uint8_t, 128>& data, uint8_t dataCount);
     void powerMode(PowerMode mode);

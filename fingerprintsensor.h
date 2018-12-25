@@ -1,10 +1,11 @@
 #ifndef FINGERPRINTSENSOR_H
 #define FINGERPRINTSENSOR_H
 
-#include <mraa.hpp>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <libsoc-cpp/spi.h>
+#include <libsoc-cpp/gpio.h>
 
 class FingerprintSensor
 {
@@ -12,9 +13,9 @@ public:
     FingerprintSensor();
 
 private:
-    mraa::Spi spi;
-    mraa::Gpio reset;
-    mraa::Gpio interrupt;
+    libsoc::Spi spi;
+    libsoc::Gpio reset;
+    libsoc::Gpio interrupt;
     std::shared_ptr<spdlog::logger> log;
     enum class State
     {
@@ -26,7 +27,7 @@ private:
     void setupGPIO();
     void checkHW();
     void setupRegisters();
-    static void intCallback(void* instance);
+    static int intCallback(void* instance);
 };
 
 #endif

@@ -10,28 +10,28 @@
 #define PROXSETTTINGS 0x09
 
 TouchSlider::TouchSlider()
-    : i2c(I2C_BUS), ready(READY_PIN)
+    : i2c(I2C_BUS, DEVICE_ADDR), ready(READY_PIN)
 {
     // Setup Logger
     log = spdlog::stdout_color_mt("TouchSlider");
 
     log->info("Configuring I2C with address {0:x}", DEVICE_ADDR);
-    i2c.frequency(mraa::I2cMode::I2C_STD);
-    if (i2c.address(DEVICE_ADDR) != mraa::Result::SUCCESS)
+    if (!i2c.isOpen())
     {
         log->error("Device address invalid");
     }
-    ready.dir(mraa::DIR_IN);
-    ready.isr(mraa::Edge::EDGE_FALLING, eventTriggered, this);
+    using namespace libsoc;
+    ready.setDirection(Direction::INPUT);
+    ready.setInterrupt(Edge::FALLING, eventTriggered, this);
 
     // Set projection mode to "self"
-    i2c.writeReg(SYSFLAGS0, 0x00);
+    i2c.writeRegByte(SYSFLAGS0, 0x00);
 
     // ProxSettings
     // > WDT Disable
     // > Event Mode
     // > 3CH Slider
-    const uint8_t proxSettings[4] = {0x00, 0xDC, 0x00, 0x00};
+    uint8_t proxSettings[4] = {0x00, 0xDC, 0x00, 0x00};
     i2c.writeByte(PROXSETTTINGS);
     i2c.write(proxSettings, sizeof(proxSettings));
 }
@@ -45,16 +45,16 @@ void TouchSlider::lowPowerMode()
 {
     log->info("IQS263 going to low power");
     ForceCommunication fc(ready);
-    i2c.writeReg(SYSFLAGS0, 0x01);
+    i2c.writeRegByte(SYSFLAGS0, 0x01);
 }
 
-void TouchSlider::eventTriggered(void* instance)
+int TouchSlider::eventTriggered(void* instance)
 {
     TouchSlider* self = reinterpret_cast<TouchSlider*>(instance);
     ForceCommunication fc(self->ready);
 
     uint8_t flags[2];
-    self->i2c.readBytesReg(SYSFLAGS0, flags, 2);
+    self->i2c.readRegBytes(SYSFLAGS0, flags, 2);
 
     auto event = static_cast<Events>(flags[1]);
     switch (event)

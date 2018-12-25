@@ -1,6 +1,7 @@
 #include <fingerprintsensor.h>
 
 #define SPI_BUS 0
+#define SPI_CS 18
 #define RESET_GPIO 22
 #define INT_GPIO 23
 
@@ -27,7 +28,7 @@
 #define FINGER_DOWN 1
 
 FingerprintSensor::FingerprintSensor()
-    : spi(SPI_BUS), reset(RESET_GPIO), interrupt(INT_GPIO)
+    : spi(SPI_BUS, SPI_CS), reset(RESET_GPIO), interrupt(INT_GPIO)
 {
     // Setup Logger
     log = spdlog::stdout_color_mt("Fingerprint");
@@ -40,21 +41,20 @@ FingerprintSensor::FingerprintSensor()
 
 void FingerprintSensor::setupSPI()
 {
-    spi.mode(mraa::Spi_Mode::SPI_MODE0);
-
     // 12 Mbit/s max supported for sensor
     const int freq = 5'000'000;
     spi.frequency(freq); //5MHz
     log->info("Configuring SPI at {}MHz", freq / 1'000'000);
-    spi.bitPerWord(8);
 }
 
 void FingerprintSensor::setupGPIO()
 {
-    interrupt.dir(mraa::DIR_IN);
-    interrupt.isr(mraa::Edge::EDGE_RISING, intCallback, this);
+    using namespace libsoc;
+    interrupt.setDirection(Direction::INPUT);
+    interrupt.setInterrupt(Edge::RISING, intCallback, this);
 
-    reset.dir(mraa::DIR_OUT_LOW);
+    reset.setDirection(Direction::OUTPUT);
+    reset.write(Level::LOW);
 }
 
 void FingerprintSensor::checkHW()
@@ -80,7 +80,7 @@ void FingerprintSensor::setupRegisters()
     state = State::WAITING_FOR_FINGER;
 }
 
-void FingerprintSensor::intCallback(void* instance)
+int FingerprintSensor::intCallback(void* instance)
 {
     auto self = reinterpret_cast<FingerprintSensor*>(instance);
 

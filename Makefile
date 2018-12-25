@@ -1,20 +1,24 @@
+SYSROOT = /home/andrew/dev/dragonboard/sysroot
+
 SHELL = /bin/bash
-CXX = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++
-AR = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ar
-LD = /media/hdd/linaro/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ld
+CXX = $(SYSROOT)/../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++
+AR = $(SYSROOT)/../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ar
+LD = $(SYSROOT)/../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ld
 CXXFLAGS = -std=c++17 -Wall -g
-INC = -I. -I./spdlog/include/
-SYSROOT = /media/hdd/linaro/sysroot
-LIBS = -lmraa -pthread
+INC = -I. -I./spdlog/include/ -I./libsoc-cpp/
+LIBS = -L./libsoc-cpp -Wl,-rpath=./libsoc-cpp -lsoc-cpp -pthread #-L$(SYSROOT)/usr/lib/aarch64-linux-gnu/ -l:libsoc.so.2
 TARGET = lib/libglassesDevices
 SOURCES = $(wildcard src/*.cpp)
 OBJS = $(SOURCES:.cpp=.o)
 INSTALL_DIR = /usr/lib
 
-all: build_dir $(TARGET).so $(TARGET).a
+all: build_libsoc build_dir $(TARGET).so $(TARGET).a
+
+build_libsoc:
+	+$(MAKE) -C libsoc-cpp
 
 build_dir:
-	if [ ! -d "lib" ]; then mkdir lib; fi
+	mkdir -p lib
 
 static: $(TARGET).a
 shared: $(TARGET).so
@@ -36,6 +40,7 @@ uninstall:
 	rm $(INSTALL_DIR)/$(TARGET).so $(INSTALL_DIR)/$(TARGET).a
 
 clean:
+	+$(MAKE) clean -C libsoc-cpp
 	rm $(TARGET).so $(TARGET).a src/*.o
 	
 cleanobjects:

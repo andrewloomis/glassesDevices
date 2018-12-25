@@ -12,7 +12,7 @@
 #define LS0 0x05
 
 RGBLed::RGBLed()
-    : i2c(I2C_BUS)
+    : i2c(I2C_BUS, DEVICE_ADDR)
 {
     // Setup Logger
     log = spdlog::stdout_color_mt("LED");
@@ -20,8 +20,7 @@ RGBLed::RGBLed()
     log->info("Configuring I2C with address 0x{0:x}", DEVICE_ADDR);
 
     // 100kHz
-    i2c.frequency(mraa::I2cMode::I2C_STD);
-    if (i2c.address(DEVICE_ADDR) != mraa::Result::SUCCESS)
+    if (!i2c.isOpen())
     {
         log->error("Device address invalid");
     }
@@ -51,14 +50,14 @@ void RGBLed::setIntensity(LED led, int intensity)
         option = 0b10;
         setPWMDutyCycle(static_cast<float>(intensity)/255);
     }
-    i2c.writeReg(LS0, option << static_cast<uint8_t>(led));
+    i2c.writeRegByte(LS0, option << static_cast<uint8_t>(led));
 }
 
 void RGBLed::setPWMFreq(float freq)
 {
     // The period of BLINK0 = (PSC0 + 1) / 44
     uint8_t prescaler = static_cast<uint8_t>(44*(1/freq) - 1);
-    i2c.writeReg(PSC0, prescaler);
+    i2c.writeRegByte(PSC0, prescaler);
 }
 
 // @param dutyCycle 0.0 to 1.0
@@ -66,5 +65,5 @@ void RGBLed::setPWMDutyCycle(float dutyCycle)
 {
     // The duty cycle of BLINK0 = (256 − PWM0) / 256
     uint8_t pwm = static_cast<uint8_t>(256 - 256*(dutyCycle));
-    i2c.writeReg(PWM0, pwm);
+    i2c.writeRegByte(PWM0, pwm);
 }
