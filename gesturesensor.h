@@ -1,7 +1,7 @@
 #ifndef GESTURESENSOR_H
 #define GESTURESENSOR_H
 
-#include <usertypes.h>
+#include "usertypes.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <array>
@@ -16,8 +16,7 @@ class GestureSensor
 public:
     GestureSensor();
     ~GestureSensor();
-    Gesture::Gesture getLatestGesture() const { return gestureBuffer.getLatest(); }
-
+    
 private:
     libsoc::I2c i2c;
     libsoc::Gpio interrupt;

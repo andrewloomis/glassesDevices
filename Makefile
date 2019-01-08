@@ -6,13 +6,13 @@ AR = $(SYSROOT)/../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64
 LD = $(SYSROOT)/../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-ld
 CXXFLAGS = -std=c++17 -Wall -g
 INC = -I. -I./spdlog/include/ -I./libsoc-cpp/
-LIBS = -L./libsoc-cpp -Wl,-rpath=./libsoc-cpp -lsoc-cpp -pthread #-L$(SYSROOT)/usr/lib/aarch64-linux-gnu/ -l:libsoc.so.2
-TARGET = lib/libglassesDevices
+LIBS = -L./libsoc-cpp -Wl,-rpath=./libsoc-cpp -lsoc-cpp
+TARGET = libglassesDevices
 SOURCES = $(wildcard src/*.cpp)
 OBJS = $(SOURCES:.cpp=.o)
 INSTALL_DIR = /usr/lib
 
-all: build_libsoc build_dir $(TARGET).so $(TARGET).a
+all: build_libsoc build_dir static shared
 
 build_libsoc:
 	+$(MAKE) -C libsoc-cpp
@@ -20,28 +20,30 @@ build_libsoc:
 build_dir:
 	mkdir -p lib
 
-static: $(TARGET).a
-shared: $(TARGET).so
+static: lib/$(TARGET).a
+shared: lib/$(TARGET).so
 
-$(TARGET).so: $(SOURCES)
+lib/$(TARGET).so: $(SOURCES)
 	$(CXX) $(CXXFLAGS) -fPIC -shared $(INC) --sysroot=$(SYSROOT) $^ -o $@ $(LIBS)
 
-$(TARGET).a: $(OBJS)
+lib/$(TARGET).a: $(OBJS)
 	$(AR) rvs $@ $(OBJS)
 
 %.o : %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC) --sysroot=$(SYSROOT) $(LIBS)
 
 install:
-	cp $(TARGET).so $(INSTALL_DIR)
-	cp $(TARGET).a $(INSTALL_DIR)
+	cp lib/$(TARGET).so $(SYSROOT)/$(INSTALL_DIR)
+	cp lib/$(TARGET).a $(SYSROOT)/$(INSTALL_DIR)
+	sudo -A -s cp lib/$(TARGET).so $(INSTALL_DIR)
+	sudo -A -s cp lib/$(TARGET).a $(INSTALL_DIR)
 
 uninstall:
 	rm $(INSTALL_DIR)/$(TARGET).so $(INSTALL_DIR)/$(TARGET).a
 
 clean:
 	+$(MAKE) clean -C libsoc-cpp
-	rm $(TARGET).so $(TARGET).a src/*.o
+	rm -f $(TARGET).so $(TARGET).a src/*.o
 	
 cleanobjects:
 	rm src/*.o

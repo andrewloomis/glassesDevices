@@ -15,18 +15,9 @@ namespace Gesture {
         RIGHT
     };
 
-    struct Gesture
-    {
-        Direction dir = Direction::NONE;
-        unsigned int timestamp = 0;
-
-        Gesture(Direction dir, unsigned int timestamp)
-            : dir(dir), timestamp(timestamp) {}
-    };
-
     struct Buffer
     {
-        std::vector<Gesture> buffer;
+        std::vector<Direction> buffer;
 
         Buffer()
         {
@@ -36,9 +27,9 @@ namespace Gesture {
         void add(Direction dir)
         {
             if (buffer.size() > 3) buffer.pop_back();
-            buffer.emplace(buffer.begin(), dir, clock());
+            buffer.emplace(buffer.begin(), dir);
         }
-        Gesture getLatest() const
+        Direction getLatest() const
         {
             return buffer[0];
         }

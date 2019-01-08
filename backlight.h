@@ -8,14 +8,20 @@
 class Backlight
 {
 public:
-    Backlight(bool startOn);
+    Backlight(float intensity);
     ~Backlight();
     void on();
     void off();
+    int increaseBrightness();
+    int decreaseBrightness();
+
+    /// @param intensity percent (0-100) in increments of 10
+    void setBrightness(int intensity);
 
 private:
     std::shared_ptr<spdlog::logger> log;
     std::ofstream backlight;
+    float lastIntensity = 0;
 };
 
 #endif
